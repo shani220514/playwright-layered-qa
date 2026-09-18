@@ -1,0 +1,19 @@
+cases:
+  - case_id: TC-BAIDU-001
+    module: baidu_home
+    title: 打开百度首页
+    type: positive
+    preconditions:
+      - 浏览器可访问公网
+    steps:
+      - 打开 BASE_URL
+      - 等待搜索框可见
+    expected_results:
+      - 页面标题包含“百度”
+      - 搜索输入框可见
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-001
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_open_baidu_home

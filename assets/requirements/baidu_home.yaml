@@ -1,0 +1,13 @@
+requirements:
+  - req_id: REQ-BAIDU-001
+    module: baidu_home
+    title: 访问首页并展示搜索入口
+    type: positive
+    description: 打开 https://www.baidu.com/ 后，用户能看到搜索输入框。
+    source_ref: examples/baidu/requirement.md
+    priority: P0
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-BAIDU-001

@@ -1,0 +1,14 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.playwright-mcp/
+.env
+reports/
+test-results/
+playwright-report/
+*.log
+.idea/
+.vscode/
+auth.json
