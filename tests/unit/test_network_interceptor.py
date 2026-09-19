@@ -1,4 +1,4 @@
-from src.interceptors.network_interceptor import NetworkInterceptor
+from src.interceptors.network_interceptor import NetworkInterceptor, rewrite_query
 
 
 class FakePage:
@@ -87,3 +87,90 @@ def test_interceptor_exports_json(tmp_path):
     text = path.read_text(encoding="utf-8")
     assert "/s" in text
     assert "200" in text
+
+
+def test_rewrite_query_overrides_tab():
+    url = "https://top.baidu.com/api/board?platform=pc&tab=realtime"
+    out = rewrite_query(url, {"tab": "novel"})
+    assert "tab=novel" in out
+    assert "platform=pc" in out
+    assert "tab=realtime" not in out
+
+
+def test_find_returns_latest_matching_path(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+
+    first = FakeRequest("https://top.baidu.com/api/board?tab=realtime")
+    second = FakeRequest("https://www.baidu.com/sugrec?wd=qa")
+    page.emit("request", first)
+    page.emit("response", FakeResponse(first, status=200, body={"success": True}))
+    page.emit("request", second)
+    page.emit("response", FakeResponse(second, status=200, body={"g": []}))
+
+    record = interceptor.find("/api/board")
+    assert record is not None
+    assert record["path"] == "/api/board"
+    assert record["response"]["status"] == 200
+    assert interceptor.find("/missing") is None
+
+
+def test_save_failure_writes_request_and_response(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+    request = FakeRequest("https://top.baidu.com/api/board?platform=pc")
+    page.emit("request", request)
+    page.emit("response", FakeResponse(request, status=200, body={"success": True}))
+
+    path = interceptor.save_failure("baidu_hot_search")
+    assert path.name == "baidu_hot_search_req_resp.json"
+    text = path.read_text(encoding="utf-8")
+    assert "/api/board" in text
+    assert "success" in text
+
+
+class FakeRoute:
+    def __init__(self, url):
+        self.request = FakeRequest(url)
+        self.continued = None
+
+    def continue_(self, **kwargs):
+        self.continued = kwargs
+
+
+class FakeRoutable:
+    def __init__(self):
+        self.handlers = {}
+        self.routes = []
+
+    def on(self, event, handler):
+        self.handlers.setdefault(event, []).append(handler)
+
+    def route(self, url_glob, handler):
+        self.routes.append((url_glob, handler))
+
+    def unroute(self, url_glob):
+        self.routes = [(glob, handler) for glob, handler in self.routes if glob != url_glob]
+
+
+def test_intercept_route_rewrites_query_then_continues(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    target = FakeRoutable()
+    interceptor.intercept_route(
+        target,
+        "**/api/board**",
+        query_overrides={"tab": "novel"},
+    )
+
+    assert len(target.routes) == 1
+    glob, handler = target.routes[0]
+    assert glob == "**/api/board**"
+    route = FakeRoute("https://top.baidu.com/api/board?platform=pc&tab=realtime")
+    handler(route)
+    assert "tab=novel" in route.continued["url"]
+    assert "tab=novel" in interceptor.last_forwarded_url
+
+    interceptor.stop_intercept(target, "**/api/board**")
+    assert target.routes == []
