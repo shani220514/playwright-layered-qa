@@ -17,3 +17,115 @@ cases:
     automation:
       status: automated
       pytest_nodeid: tests/examples/test_baidu_home.py::test_open_baidu_home
+
+  - case_id: TC-BAIDU-002
+    module: baidu_home
+    title: 点击百度热搜进入榜单
+    type: positive
+    preconditions:
+      - 已打开百度首页
+    steps:
+      - 点击首页热搜入口
+    expected_results:
+      - 打开热搜榜页面
+      - 地址包含 top.baidu.com
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-002
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_click_baidu_hot_search
+
+  - case_id: TC-BAIDU-003
+    module: baidu_home
+    title: 捕获热搜页自己打开的榜单页面请求
+    type: positive
+    preconditions:
+      - 已打开百度首页
+    steps:
+      - 点击首页热搜入口
+      - 记录页面自己打开的 /board 文档请求
+    expected_results:
+      - 拦截记录中出现 /board
+      - 地址包含 top.baidu.com
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-003
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_get_hot_search_api
+
+  - case_id: TC-BAIDU-004
+    module: baidu_home
+    title: 校验热搜榜单页面响应
+    type: positive
+    preconditions:
+      - 已打开百度首页
+    steps:
+      - 点击首页热搜入口
+      - 读取页面自己打开的 /board 响应
+    expected_results:
+      - HTTP 状态为 200
+      - 页面标题包含“热搜”
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-004
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_validate_hot_search_api
+
+  - case_id: TC-BAIDU-005
+    module: baidu_home
+    title: 弱网下延迟热搜榜单接口
+    type: boundary
+    preconditions:
+      - 已打开百度首页
+    steps:
+      - 对 top.baidu.com/board 设置延迟后再点击热搜
+      - 等待页面自己的 /board 文档请求返回
+    expected_results:
+      - 返回时间不短于设定延迟
+      - HTTP 状态为 200
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-005
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_weak_network_delay
+
+  - case_id: TC-BAIDU-006
+    module: baidu_home
+    title: 改写热搜榜单页面查询参数
+    type: boundary
+    preconditions:
+      - 已打开百度首页
+    steps:
+      - 将 /board 的 tab 改写为 novel 后再点击热搜
+    expected_results:
+      - 实际转发的 URL 包含 tab=novel
+      - HTTP 状态为 200
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-006
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_modify_request_params
+
+  - case_id: TC-BAIDU-007
+    module: baidu_home
+    title: 保存热搜榜单请求和响应
+    type: positive
+    preconditions:
+      - 已打开百度首页
+    steps:
+      - 点击首页热搜入口
+      - 将捕获到的 /board 写入 JSON
+    expected_results:
+      - 导出文件存在
+      - 记录中包含 /board
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-BAIDU-007
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_home.py::test_save_request_response

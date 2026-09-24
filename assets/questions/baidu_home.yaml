@@ -1,1 +1,7 @@
-questions: []
+questions:
+  - question_id: Q-001
+    module: baidu_home
+    description: 新版首页是经典搜索框还是对话输入框
+    suggested_confirmation: 样例同时等待 #chat-textarea 和 #kw，确认稳定选择器后再收窄
+    status: open
+    source_ref: examples/baidu/requirement.md

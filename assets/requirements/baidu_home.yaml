@@ -3,7 +3,7 @@ requirements:
     module: baidu_home
     title: 访问首页并展示搜索入口
     type: positive
-    description: 打开 https://www.baidu.com/ 后，用户能看到搜索输入框。
+    description: 打开 BASE_URL 后，用户能看到搜索输入框。
     source_ref: examples/baidu/requirement.md
     priority: P0
     tags:
@@ -11,3 +11,81 @@ requirements:
       - method:scenario
     linked_case_ids:
       - TC-BAIDU-001
+
+  - req_id: REQ-BAIDU-002
+    module: baidu_home
+    title: 从首页进入热搜榜
+    type: positive
+    description: 点击首页热搜入口后，打开热搜榜页面。
+    source_ref: examples/baidu/requirement.md
+    priority: P0
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-BAIDU-002
+
+  - req_id: REQ-BAIDU-003
+    module: baidu_home
+    title: 观察热搜页自己打开的榜单页面
+    type: positive
+    description: 进入热搜榜时，页面自己请求 /board 文档，测试只观察该请求。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-BAIDU-003
+
+  - req_id: REQ-BAIDU-004
+    module: baidu_home
+    title: 热搜榜单页面返回可用
+    type: positive
+    description: /board 返回 200，页面标题包含热搜。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-BAIDU-004
+
+  - req_id: REQ-BAIDU-005
+    module: baidu_home
+    title: 弱网下热搜榜单页面仍返回
+    type: boundary
+    description: 延迟 /board 文档请求后，页面仍能等到 200 响应，耗时不低于设定延迟。
+    source_ref: examples/baidu/requirement.md
+    priority: P2
+    tags:
+      - dimension:performance
+      - method:boundary
+    linked_case_ids:
+      - TC-BAIDU-005
+
+  - req_id: REQ-BAIDU-006
+    module: baidu_home
+    title: 改写热搜榜单查询参数后仍打开
+    type: boundary
+    description: 将 /board 的 tab 改写为 novel 后再打开，地址栏和转发 URL 都带 tab=novel，响应仍为 200。
+    source_ref: examples/baidu/requirement.md
+    priority: P2
+    tags:
+      - dimension:function
+      - method:boundary
+    linked_case_ids:
+      - TC-BAIDU-006
+
+  - req_id: REQ-BAIDU-007
+    module: baidu_home
+    title: 失败排查可导出热搜请求和响应
+    type: positive
+    description: 热搜页的 /board 文档请求可导出为 JSON。导出内容不含 Cookie 和 Authorization 原文。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-BAIDU-007

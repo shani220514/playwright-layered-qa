@@ -9,7 +9,7 @@ from src.yaml_runner.schema import load_cases
 pytestmark = [pytest.mark.example, pytest.mark.ui, pytest.mark.smoke, pytest.mark.intercept]
 
 CASES = Path(__file__).resolve().parents[2] / "assets" / "cases" / "baidu_home.yaml"
-BOARD_API = "**/api/board**"
+BOARD_URL = "**/*board*"
 DELAY_MS = 1500
 
 
@@ -36,35 +36,38 @@ def test_click_baidu_hot_search(page, config):
 
 
 def test_get_hot_search_api(page, config, interceptor):
-    """TC-BAIDU-003: 进入热搜页后获取 /api/board 数据。"""
-    board = _open_board(page, config)
-    record = _request_board_api(interceptor, board)
-    assert record is not None, "未捕获到 /api/board"
-    _print_result("获取 API 数据", **_record_fields(record))
+    """TC-BAIDU-003: 进入热搜页后捕获页面自己打开的 /board 文档请求。"""
+    board = _open_board(page, config, interceptor)
+    record = interceptor.find("/board")
+    assert record is not None, "未捕获到 /board"
+    assert "top.baidu.com" in board.url
+    _print_result("获取页面请求", **_record_fields(record))
 
 
 def test_validate_hot_search_api(page, config, interceptor):
-    """TC-BAIDU-004: 拦截 /api/board 并校验返回。"""
-    board = _open_board(page, config)
-    record = _request_board_api(interceptor, board)
-    assert record is not None, "未捕获到 /api/board"
+    """TC-BAIDU-004: 校验热搜页自然打开的 /board 响应。"""
+    board = _open_board(page, config, interceptor)
+    record = interceptor.find("/board")
+    assert record is not None, "未捕获到 /board"
     response = record["response"]
     assert response is not None
     assert response["status"] == 200
-    body = response["body"]
-    assert isinstance(body, dict)
-    assert body.get("success") is True or "data" in body
-    _print_result("拦截校验返回", **_record_fields(record), check="PASS")
+    assert "热搜" in board.title()
+    _print_result("拦截校验返回", **_record_fields(record), title=board.title(), check="PASS")
 
 
 def test_weak_network_delay(page, config, interceptor):
-    """TC-BAIDU-005: 弱网模拟，延迟 /api/board 返回。"""
-    board = _open_board(page, config)
-    interceptor.intercept_route(page.context, BOARD_API, delay_ms=DELAY_MS)
+    """TC-BAIDU-005: 弱网模拟，延迟热搜页 /board 文档请求。"""
+    home = BaiduHomePage(page)
+    home.open(config.base_url)
+    interceptor.include_resource_types({"document"})
+    interceptor.intercept_route(page.context, BOARD_URL, delay_ms=DELAY_MS)
     started = time.perf_counter()
-    record = _request_board_api(interceptor, board)
+    board = home.open_hot_search()
     elapsed_ms = (time.perf_counter() - started) * 1000
-    interceptor.stop_intercept(page.context, BOARD_API)
+    interceptor.stop_intercept(page.context, BOARD_URL)
+    assert "top.baidu.com" in board.url
+    record = interceptor.find("/board")
     assert record is not None
     assert record["response"]["status"] == 200
     assert elapsed_ms >= DELAY_MS
@@ -77,34 +80,39 @@ def test_weak_network_delay(page, config, interceptor):
 
 
 def test_modify_request_params(page, config, interceptor):
-    """TC-BAIDU-006: 修改 /api/board 请求参数后再转发。"""
-    board = _open_board(page, config)
+    """TC-BAIDU-006: 改写热搜页 /board 的查询参数后再打开。"""
+    home = BaiduHomePage(page)
+    home.open(config.base_url)
+    interceptor.include_resource_types({"document"})
     interceptor.intercept_route(
         page.context,
-        BOARD_API,
+        BOARD_URL,
         query_overrides={"tab": "novel"},
     )
-    mutated = _request_board_api(interceptor, board)
-    interceptor.stop_intercept(page.context, BOARD_API)
+    board = home.open_hot_search()
+    interceptor.stop_intercept(page.context, BOARD_URL)
+    mutated = interceptor.find("/board")
     assert mutated is not None
     forwarded = interceptor.last_forwarded_url or mutated["url"]
     assert "tab=novel" in forwarded
+    assert "tab=novel" in board.url
     assert mutated["response"]["status"] == 200
     _print_result(
         "修改请求参数",
-        original_tab="realtime",
         forwarded=forwarded,
+        landed=board.url,
         status=mutated["response"]["status"],
     )
 
 
 def test_save_request_response(page, config, interceptor):
-    """TC-BAIDU-007: 保存请求和响应；失败时 conftest 会额外留痕。"""
-    board = _open_board(page, config)
-    record = _request_board_api(interceptor, board)
+    """TC-BAIDU-007: 保存热搜页自然请求和响应；失败时 conftest 会额外留痕。"""
+    _open_board(page, config, interceptor)
+    record = interceptor.find("/board")
     assert record is not None
     saved = interceptor.save("baidu_hot_search.json")
     assert saved.exists()
+    assert "/board" in saved.read_text(encoding="utf-8")
     _print_result(
         "保存请求和响应",
         path=str(saved),
@@ -113,9 +121,11 @@ def test_save_request_response(page, config, interceptor):
     )
 
 
-def _open_board(page, config):
+def _open_board(page, config, interceptor=None):
     home = BaiduHomePage(page)
     home.open(config.base_url)
+    if interceptor is not None:
+        interceptor.include_resource_types({"document"})
     board = home.open_hot_search()
     assert "top.baidu.com" in board.url
     return board
@@ -138,13 +148,3 @@ def _record_fields(record: dict) -> dict:
         "success": body.get("success") if isinstance(body, dict) else None,
         "cards": len(cards) if isinstance(cards, list) else None,
     }
-
-
-def _request_board_api(interceptor, board):
-    with board.expect_response(lambda response: "/api/board" in response.url, timeout=20_000):
-        board.evaluate(
-            """async () => {
-                await fetch('/api/board?platform=pc&tab=realtime', {credentials: 'include'});
-            }"""
-        )
-    return interceptor.find("/api/board")

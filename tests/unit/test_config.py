@@ -14,4 +14,10 @@ def test_config_reads_base_url_from_env(monkeypatch):
 def test_config_missing_base_url_raises_readable_error(monkeypatch):
     monkeypatch.delenv("BASE_URL", raising=False)
     with pytest.raises(ConfigError, match="BASE_URL"):
-        Config.from_env()
+        Config.from_env(load_env=False)
+
+
+def test_config_rejects_non_http_base_url(monkeypatch):
+    monkeypatch.setenv("BASE_URL", "www.baidu.com")
+    with pytest.raises(ConfigError, match="http"):
+        Config.from_env(load_env=False)

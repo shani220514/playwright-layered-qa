@@ -1,3 +1,6 @@
+import asyncio
+import time
+
 from src.interceptors.network_interceptor import NetworkInterceptor, rewrite_query
 
 
@@ -174,3 +177,114 @@ def test_intercept_route_rewrites_query_then_continues(tmp_path):
 
     interceptor.stop_intercept(target, "**/api/board**")
     assert target.routes == []
+
+
+def test_interceptor_redacts_secret_headers(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+    request = FakeRequest(
+        "https://www.baidu.com/sugrec",
+        headers={"cookie": "sid=secret", "accept": "application/json", "Authorization": "Bearer token"},
+    )
+    page.emit("request", request)
+    page.emit(
+        "response",
+        FakeResponse(request, headers={"set-cookie": "sid=secret", "content-type": "application/json"}),
+    )
+
+    record = interceptor.records()[0]
+    assert record["headers"]["cookie"] == "***"
+    assert record["headers"]["Authorization"] == "***"
+    assert record["headers"]["accept"] == "application/json"
+    assert record["response"]["headers"]["set-cookie"] == "***"
+    saved = interceptor.save("redacted.json").read_text(encoding="utf-8")
+    assert "secret" not in saved
+    assert "Bearer token" not in saved
+
+
+def test_interceptor_pairs_response_when_request_wrapper_differs(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+    page.emit("request", FakeRequest("https://top.baidu.com/api/board?tab=realtime"))
+    other = FakeRequest("https://top.baidu.com/api/board?tab=novel")
+    page.emit("response", FakeResponse(other, status=200, body={"success": True}))
+
+    record = interceptor.records()[0]
+    assert record["response"]["status"] == 200
+    assert record["response"]["body"] == {"success": True}
+
+
+def test_document_requests_stay_hidden_until_included(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+    page.emit("request", FakeRequest("https://top.baidu.com/board", resource_type="document"))
+    assert interceptor.records() == []
+
+    interceptor.include_resource_types({"document"})
+    request = FakeRequest("https://top.baidu.com/board?platform=pc", resource_type="document")
+    page.emit("request", request)
+    page.emit("response", FakeResponse(request, status=200, body="<html>热搜</html>"))
+    records = interceptor.records()
+    assert len(records) == 1
+    assert records[0]["path"] == "/board"
+    assert records[0]["response"]["status"] == 200
+
+
+def test_interceptor_truncates_large_response_body(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+    request = FakeRequest("https://www.baidu.com/sugrec")
+    page.emit("request", request)
+    page.emit("response", FakeResponse(request, body="x" * 70_000))
+
+    body = interceptor.records()[0]["response"]["body"]
+    assert isinstance(body, str)
+    assert len(body) < 70_000
+    assert "truncated" in body
+
+
+def test_document_query_override_redirects(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    target = FakeRoutable()
+    interceptor.intercept_route(target, "**/*board*", query_overrides={"tab": "novel"})
+    _glob, handler = target.routes[0]
+    route = FakeRoute("https://top.baidu.com/board?platform=pc")
+    route.request.resource_type = "document"
+    route.fulfilled = None
+
+    def fulfill(**kwargs):
+        route.fulfilled = kwargs
+
+    route.fulfill = fulfill
+    handler(route)
+    assert route.fulfilled["status"] == 302
+    assert "tab=novel" in route.fulfilled["headers"]["location"]
+    assert "tab=novel" in interceptor.last_forwarded_url
+
+
+def test_intercept_route_delay_returns_without_blocking(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    target = FakeRoutable()
+    interceptor.intercept_route(target, "**/api/board**", delay_ms=80)
+    _glob, handler = target.routes[0]
+
+    class _Impl:
+        def __init__(self):
+            self.kwargs = None
+
+        async def continue_(self, **kwargs):
+            self.kwargs = kwargs
+
+    route = FakeRoute("https://top.baidu.com/api/board?platform=pc&tab=realtime")
+    route._impl_obj = _Impl()
+    started = time.perf_counter()
+    pending = handler(route)
+    assert time.perf_counter() - started < 0.3
+    assert asyncio.iscoroutine(pending)
+    asyncio.run(pending)
+    assert time.perf_counter() - started >= 0.08
+    assert route._impl_obj.kwargs is not None

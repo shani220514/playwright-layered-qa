@@ -6,10 +6,10 @@ Pytest + Playwright 分层测试**框架**。默认 CI 只跑离线单测，不�
 
 ## 能做什么
 
-- `Config`：只读环境变量，缺 `BASE_URL` 时给出可读错误
+- `Config`：只读环境变量。缺 `BASE_URL`，或不是绝对 http(s) 地址时，给出可读错误
 - `BasePage`：goto / click / fill / 等待
-- `NetworkInterceptor`：捕获 XHR/fetch 并导出 JSON
-- YAML schema：`assets/cases` 校验与加载
+- `NetworkInterceptor`：默认捕获 XHR/fetch，需要时再纳入 document。导出前把 Cookie、Authorization 等敏感头写成 `***`
+- YAML schema：校验 `assets/` 里的用例、需求和待确认问题，并核对需求与用例的引用。步骤是给人读的，不会被执行
 - 8 个 Skill 样例：需求解析 → 用例结构化 → 脚本编织，以及修复 / 探针 / 回归 / 缺陷 / 日报
 
 ## 快速开始
@@ -29,7 +29,7 @@ python -m playwright install chromium
 python -m pytest tests/examples/test_baidu_home.py -m example
 ```
 
-该用例会打开 https://www.baidu.com/ ，等待搜索框，并把拦截到的 XHR/fetch 写到 `reports/api-captures/baidu_home.json`。
+该用例会打开 https://www.baidu.com/ ，等待搜索框，并把拦截到的 XHR/fetch 写到 `reports/api-captures/baidu_home.json`。活站点失败时，截图和 trace 留在 `test-results/`。请先复制 `env.example` 为 `.env`，示例不会在缺少 `BASE_URL` 时偷偷改用百度。
 
 ## 目录
 
@@ -58,9 +58,13 @@ tests/examples/        打开百度 + 拦截
 
 在 Cursor 里提到这些中文名或英文 skill 名即可调用。
 
+## YAML 的角色
+
+`assets/cases`、`assets/requirements`、`assets/questions` 用来追溯：字段是否齐全、`case_id` 是否唯一、`requirement_ids` 是否指向已有需求、自动化用例的 `pytest_nodeid` 是否写明。步骤是自然语言，本仓库不解释、不执行这些步骤。脚本仍是手写的 pytest。
+
 ## 后续可补
 
-- YAML 步骤执行器
-- API Mock / Golden
+- YAML 步骤执行器（若以后要让 YAML 真正跑起来）
+- API Mock / Golden（当前只支持延迟和改 query）
 - GUI Runner
 - 你自己的业务 `pages/` 与用例（请放私有仓）
