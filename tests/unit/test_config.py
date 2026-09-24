@@ -7,6 +7,9 @@ from src.core.config import Config, ConfigError
 
 def test_config_reads_base_url_from_env(monkeypatch):
     monkeypatch.setenv("BASE_URL", "https://www.baidu.com/")
+    monkeypatch.delenv("DB_HOST", raising=False)
+    monkeypatch.delenv("DB_USER", raising=False)
+    monkeypatch.delenv("DB_NAME", raising=False)
     cfg = Config.from_env()
     assert cfg.base_url == "https://www.baidu.com/"
 
