@@ -12,3 +12,4 @@ playwright-report/
 .idea/
 .vscode/
 auth.json
+.superpowers/sdd/
