@@ -11,6 +11,7 @@ Pytest + Playwright 分层测试**框架**。默认 CI 只跑离线单测，不�
 - `NetworkInterceptor`：默认捕获 XHR/fetch，需要时再纳入 document。导出前把 Cookie、Authorization 等敏感头写成 `***`
 - YAML schema：校验 `assets/` 里的用例、需求和待确认问题，并核对需求与用例的引用。步骤是给人读的，不会被执行
 - 8 个 Skill 样例：需求解析 → 用例结构化 → 脚本编织，以及修复 / 探针 / 回归 / 缺陷 / 日报
+- 可选 MySQL：环境变量配置 `DB_*` 后，可用 `MySQLClient` 查库，并用 `assert_response_matches_db` 把拦截到的响应 JSON 字段与一行 SQL 结果比对
 
 ## 快速开始
 
@@ -20,6 +21,26 @@ python -m venv .venv
 pip install -r requirements.txt
 copy env.example .env
 python -m pytest tests/unit -q
+```
+
+可选数据库（不配则 `config.db` 为 `None`，现有用例不受影响）：
+
+```bash
+# 在 .env 中取消注释并填写 DB_HOST / DB_USER / DB_NAME 等
+```
+
+手写用例中的最小比对示例：
+
+```python
+from src.assertions.db_match import assert_response_matches_db
+from src.db.mysql_client import MySQLClient
+
+record = interceptor.find("/api/user")
+body = record["response"]["body"]
+with MySQLClient(config.db) as db:
+    row = db.fetch_one("SELECT id, name FROM users WHERE id=%s", (body["id"],))
+assert_response_matches_db(body, row)  # 同名键
+# 或：assert_response_matches_db(body, row, {"data.name": "name"})
 ```
 
 默认不跑活站点：
@@ -72,3 +93,4 @@ tests/examples/        打开百度 + 拦截
 - API Mock / Golden（当前只支持延迟和改 query）
 - GUI Runner
 - 你自己的业务 `pages/` 与用例（请放私有仓）
+- 更多数据库驱动（当前仅 MySQL）
