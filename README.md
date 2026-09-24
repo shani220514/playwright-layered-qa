@@ -27,6 +27,10 @@ python -m pytest tests/unit -q
 ```bash
 python -m playwright install chromium
 python -m pytest tests/examples/test_baidu_home.py -m example
+
+# 跑流程化用例
+copy env.example .env
+python -m pytest tests/examples/test_baidu_hot_entry.py -m example --headed
 ```
 
 该用例会打开 https://www.baidu.com/ ，等待搜索框，并把拦截到的 XHR/fetch 写到 `reports/api-captures/baidu_home.json`。活站点失败时，截图和 trace 留在 `test-results/`。请先复制 `env.example` 为 `.env`，示例不会在缺少 `BASE_URL` 时偷偷改用百度。

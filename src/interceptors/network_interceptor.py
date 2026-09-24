@@ -57,9 +57,11 @@ class NetworkInterceptor:
                 return _public_record(record)
         return None
 
-    def save(self, filename: str = "captured_apis.json") -> Path:
+    def save(self, filename: str = "captured_apis.json", *, timestamp: bool = False) -> Path:
         self._materialize_bodies()
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        if timestamp:
+            filename = _stamp_filename(filename)
         path = self.output_dir / filename
         payload = [_public_record(record) for record in self.captured]
         path.write_text(
@@ -178,6 +180,13 @@ class NetworkInterceptor:
             response_record["body"] = _limit_body(_response_body(response))
 
 
+def _stamp_filename(filename: str) -> str:
+    path = Path(filename)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    suffix = path.suffix or ".json"
+    return f"{path.stem}_{stamp}{suffix}"
+
+
 def rewrite_query(url: str, query_overrides: dict[str, str]) -> str:
     parsed = urlparse(url)
     params = parse_qs(parsed.query, keep_blank_values=True)
@@ -239,9 +248,31 @@ def _response_body(response):
         return response.json()
     except Exception:
         try:
-            return response.text()
+            text = response.text()
         except Exception:
             return None
+        embedded = _embedded_s_data(text)
+        if embedded is not None:
+            return embedded
+        return text
+
+
+def _embedded_s_data(text: str):
+    marker = "<!--s-data:"
+    start = text.find(marker)
+    if start < 0:
+        return None
+    start += len(marker)
+    end = text.find("-->", start)
+    if end < 0:
+        return None
+    try:
+        payload = json.loads(text[start:end])
+    except json.JSONDecodeError:
+        return None
+    if isinstance(payload, (dict, list)):
+        return payload
+    return None
 
 
 def _limit_body(body):

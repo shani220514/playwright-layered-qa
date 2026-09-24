@@ -1,4 +1,5 @@
 import asyncio
+import re
 import time
 
 from src.interceptors.network_interceptor import NetworkInterceptor, rewrite_query
@@ -90,6 +91,20 @@ def test_interceptor_exports_json(tmp_path):
     text = path.read_text(encoding="utf-8")
     assert "/s" in text
     assert "200" in text
+
+
+def test_save_appends_timestamp_to_filename(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    page = FakePage()
+    interceptor.start_capture(page)
+    request = FakeRequest("https://top.baidu.com/api/board?platform=pc")
+    page.emit("request", request)
+    page.emit("response", FakeResponse(request, status=200, body={"success": True}))
+
+    path = interceptor.save("baidu_hot_entry.json", timestamp=True)
+    assert path.parent == tmp_path
+    assert re.fullmatch(r"baidu_hot_entry_\d{8}_\d{6}\.json", path.name)
+    assert "/api/board" in path.read_text(encoding="utf-8")
 
 
 def test_rewrite_query_overrides_tab():
@@ -214,6 +229,20 @@ def test_interceptor_pairs_response_when_request_wrapper_differs(tmp_path):
     record = interceptor.records()[0]
     assert record["response"]["status"] == 200
     assert record["response"]["body"] == {"success": True}
+
+
+def test_document_response_keeps_embedded_s_data_json(tmp_path):
+    interceptor = NetworkInterceptor(output_dir=tmp_path)
+    interceptor.include_resource_types({"document"})
+    page = FakePage()
+    interceptor.start_capture(page)
+    request = FakeRequest("https://top.baidu.com/board?platform=pc", resource_type="document")
+    html = '<html><!--s-data:{"data":{"cards":[{"component":"hotList"}]}}--></html>'
+    page.emit("request", request)
+    page.emit("response", FakeResponse(request, status=200, body=html))
+
+    body = interceptor.records()[0]["response"]["body"]
+    assert body["data"]["cards"][0]["component"] == "hotList"
 
 
 def test_document_requests_stay_hidden_until_included(tmp_path):
