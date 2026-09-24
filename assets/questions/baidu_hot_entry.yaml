@@ -1,0 +1,40 @@
+questions:
+  - question_id: Q-ENTRY-001
+    module: baidu_hot_entry
+    description: 点击落点是标题上的「百度热搜」，还是包住它的链接
+    suggested_confirmation: 截图高亮的是 aria-label 为「百度热搜」的标题。确认可点区域后再收窄
+    resolution: "aria-label 为「百度热搜」的标题"
+    status: closed
+    source_ref: examples/baidu/requirement.md
+
+  - question_id: Q-ENTRY-002
+    module: baidu_hot_entry
+    description: 热搜榜是新窗口打开，还是当前页跳转
+    suggested_confirmation: 两种都要能判断已经离开首页并到达指定地址
+    resolution: "两种都要能判断已经离开首页并到达指定地址"
+    status: closed
+    source_ref: examples/baidu/requirement.md
+
+  - question_id: Q-ENTRY-003
+    module: baidu_hot_entry
+    description: 地址必须逐字等于给出的 URL，还是只要主机、路径和这两个参数一致即可
+    suggested_confirmation: 建议至少校验主机 top.baidu.com、路径 /board，以及 platform=pc、sa=pcindex_entry
+    resolution: "至少校验主机 top.baidu.com、路径 /board，以及 platform=pc、sa=pcindex_entry"
+    status: closed
+    source_ref: examples/baidu/requirement.md
+
+  - question_id: Q-ENTRY-004
+    module: baidu_hot_entry
+    description: 除地址外，是否要断言榜单内容，例如出现热搜词
+    suggested_confirmation: 本次范围只要求进入该页。榜单条文、小说或电影切换不在本次需求内
+    resolution: "要断言榜单内容，例如出现热搜词"
+    status: closed
+    source_ref: examples/baidu/requirement.md
+
+  - question_id: Q-ENTRY-005
+    module: baidu_hot_entry
+    description: 未登录是否为前置条件
+    suggested_confirmation: 截图为未登录。建议默认不登录即可进入热搜榜
+    resolution: "默认不登录即可进入热搜榜"
+    status: closed
+    source_ref: examples/baidu/requirement.md

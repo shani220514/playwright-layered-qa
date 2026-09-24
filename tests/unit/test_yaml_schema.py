@@ -166,3 +166,25 @@ requirements:
     requirements = load_requirements(req_path)
     with pytest.raises(CaseSchemaError, match="REQ-MISSING"):
         validate_links(cases, requirements)
+
+
+def test_closed_question_requires_resolution(tmp_path):
+    from src.yaml_runner.schema import load_questions
+
+    yaml_path = tmp_path / "questions.yaml"
+    yaml_path.write_text(
+        """
+questions:
+  - question_id: Q-1
+    module: m
+    description: 点哪里
+    suggested_confirmation: 待确认
+    resolution: ""
+    status: closed
+    source_ref: x
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CaseSchemaError, match="resolution"):
+        load_questions(yaml_path)

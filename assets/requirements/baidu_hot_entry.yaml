@@ -1,0 +1,120 @@
+requirements:
+  - req_id: REQ-ENTRY-001
+    module: baidu_hot_entry
+    title: 打开百度首页
+    type: positive
+    description: 访问 https://www.baidu.com/ 后页面可用，能看到搜索入口。
+    source_ref: examples/baidu/requirement.md
+    priority: P0
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-ENTRY-001
+
+  - req_id: REQ-ENTRY-002
+    module: baidu_hot_entry
+    title: 首页热搜入口可见可点
+    type: positive
+    description: 首页上能看到「百度热搜」，并且可以点击。
+    source_ref: examples/baidu/requirement.md
+    priority: P0
+    tags:
+      - dimension:ui
+      - method:scenario
+    linked_case_ids:
+      - TC-ENTRY-002
+
+  - req_id: REQ-ENTRY-003
+    module: baidu_hot_entry
+    title: 点击百度热搜进入热搜榜
+    type: positive
+    description: 点击「百度热搜」后打开 https://top.baidu.com/board?platform=pc&sa=pcindex_entry 。
+    source_ref: examples/baidu/requirement.md
+    priority: P0
+    tags:
+      - dimension:function
+      - method:scenario
+    linked_case_ids:
+      - TC-ENTRY-002
+
+  - req_id: REQ-ENTRY-004
+    module: baidu_hot_entry
+    title: 热搜榜页面可识别
+    type: positive
+    description: 到达页的标题或页头能看出是百度热搜，不是空白页。
+    source_ref: examples/baidu/requirement.md
+    priority: P0
+    tags:
+      - dimension:ui
+      - method:scenario
+    linked_case_ids:
+      - TC-ENTRY-002
+
+  - req_id: REQ-ENTRY-005
+    module: baidu_hot_entry
+    title: 热搜入口不可用时不得判成功
+    type: negative
+    description: 首页没有可点击的「百度热搜」时，不能当成已经进入热搜榜。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:function
+      - method:error_guessing
+    linked_case_ids:
+      - TC-ENTRY-003
+
+  - req_id: REQ-ENTRY-006
+    module: baidu_hot_entry
+    title: 热搜榜打不开时表现为失败
+    type: negative
+    description: 热搜榜地址不可达时，应表现为打开失败，而不是停在首页还报成功。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:compatibility
+      - method:error_guessing
+
+  - req_id: REQ-ENTRY-007
+    module: baidu_hot_entry
+    title: 新窗口被拦截时能够发现
+    type: negative
+    description: 若热搜在新窗口打开且被浏览器拦截，应能发现没有进入热搜榜。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:compatibility
+      - method:error_guessing
+
+  - req_id: REQ-ENTRY-008
+    module: baidu_hot_entry
+    title: 到达地址包含约定参数
+    type: boundary
+    description: 到达地址应包含 platform=pc 与 sa=pcindex_entry。多出来的参数是否仍算通过尚未确认。
+    source_ref: examples/baidu/requirement.md
+    priority: P1
+    tags:
+      - dimension:function
+      - method:boundary
+
+  - req_id: REQ-ENTRY-009
+    module: baidu_hot_entry
+    title: 慢网下等待页面就绪
+    type: boundary
+    description: 首页或热搜榜加载慢时，应等待页面就绪，不用固定时长硬等。
+    source_ref: examples/baidu/requirement.md
+    priority: P2
+    tags:
+      - dimension:performance
+      - method:boundary
+
+  - req_id: REQ-ENTRY-010
+    module: baidu_hot_entry
+    title: 多处热搜文案时点首页标题
+    type: boundary
+    description: 页面上若有多处「百度热搜」，要点首页热搜标题这一处，而不是页脚或其他链接。
+    source_ref: examples/baidu/requirement.md
+    priority: P2
+    tags:
+      - dimension:ui
+      - method:equivalence

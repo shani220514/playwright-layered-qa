@@ -127,6 +127,7 @@ def load_questions(path: str | Path) -> list[dict]:
             raise CaseSchemaError(
                 f"{label}.status must be one of: {', '.join(sorted(QUESTION_STATUSES))}"
             )
+        _validate_resolution(item, label)
     return items
 
 
@@ -155,6 +156,17 @@ def _read_yaml(path: str | Path) -> dict:
     if not isinstance(payload, dict):
         raise CaseSchemaError(f"YAML root must be a mapping: {yaml_path}")
     return payload
+
+
+def _validate_resolution(item: dict, label: str) -> None:
+    if "resolution" not in item or item["resolution"] is None:
+        if item["status"] == "closed":
+            raise CaseSchemaError(f"{label}.resolution is required when status is closed")
+        return
+    if not isinstance(item["resolution"], str):
+        raise CaseSchemaError(f"{label}.resolution must be a string")
+    if item["status"] == "closed" and not item["resolution"].strip():
+        raise CaseSchemaError(f"{label}.resolution is required when status is closed")
 
 
 def _require_text(value: object, label: str) -> None:

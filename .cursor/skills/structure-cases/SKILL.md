@@ -40,6 +40,8 @@ assets/questions/*.yaml   # 若有待确认问题
 
 `question_id`, `module`, `description`, `suggested_confirmation`, `status`, `source_ref`
 
+可选 `resolution`：人工结论。`open` 时可为 `""`；`closed` 时必须是非空字符串。不要把结论写进 `suggested_confirmation`。
+
 ## 百度样例
 
 对照 `examples/baidu/requirement.md` → `assets/cases/baidu_home.yaml`。

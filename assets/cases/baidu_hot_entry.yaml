@@ -1,0 +1,58 @@
+cases:
+  - case_id: TC-ENTRY-001
+    module: baidu_hot_entry
+    title: 打开百度首页
+    type: positive
+    preconditions:
+      - 可访问公网
+      - 未要求登录
+    steps:
+      - 打开 https://www.baidu.com/
+    expected_results:
+      - 页面可用
+      - 能看到搜索入口
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-ENTRY-001
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_hot_entry.py::test_open_baidu_for_hot_entry
+
+  - case_id: TC-ENTRY-002
+    module: baidu_hot_entry
+    title: 点击百度热搜进入热搜榜
+    type: positive
+    preconditions:
+      - 已打开百度首页
+      - 能看到「百度热搜」
+    steps:
+      - 点击「百度热搜」
+    expected_results:
+      - 进入 https://top.baidu.com/board?platform=pc&sa=pcindex_entry
+      - 页面可识别为百度热搜
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-ENTRY-002
+      - REQ-ENTRY-003
+      - REQ-ENTRY-004
+    automation:
+      status: automated
+      pytest_nodeid: tests/examples/test_baidu_hot_entry.py::test_click_hot_entry_to_board
+
+  - case_id: TC-ENTRY-003
+    module: baidu_hot_entry
+    title: 热搜入口不可点击时不得判成功
+    type: negative
+    preconditions:
+      - 首页未出现可点击的「百度热搜」
+    steps:
+      - 查找并点击「百度热搜」
+    expected_results:
+      - 无法进入热搜榜
+      - 结果为失败
+    source_ref: examples/baidu/requirement.md
+    requirement_ids:
+      - REQ-ENTRY-005
+    automation:
+      status: manual
+      pytest_nodeid: null
