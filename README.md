@@ -97,11 +97,3 @@ docs/superpowers/      规格与实现计划
 - 已自动化用例是否写了 `pytest_nodeid`（`manual` / `pending` 则为 `null`）
 
 `steps` 是给人读的自然语言。本仓库没有 YAML 执行器，pytest 也不会去读这些步骤。跑起来的是编织（或手改）后的 `.py` 文件。当前样例模块是 `baidu_home` 与 `baidu_hot_entry`。
-
-## 后续可补
-
-- YAML 步骤执行器（若以后要让 YAML 真正跑起来）
-- API Mock / Golden（当前只支持延迟和改 query）
-- Skill 介绍页与文件归档（规格在 `docs/superpowers/`，尚未实现）
-- 你自己的业务 `pages/` 与用例（请放私有仓）
-- 更多数据库驱动（当前仅 MySQL）
