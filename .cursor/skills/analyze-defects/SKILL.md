@@ -10,6 +10,7 @@ description: Analyzes a failure and writes a standard defect report with root-ca
 1. 判断类型：前端展示 / 后端接口 / 环境网络 / 测试数据 / 脚本本身
 2. 写出推理，再下结论
 3. 按模板提单；脚本问题走「脚本修复」，产品问题才当缺陷
+4. 保存为 `reports/缺陷报告_<YYYYMMDD_HHMMSS>.md`。时间戳用本地时间，放在扩展名前。同一秒内重名时，在时间戳后追加 `_2`、`_3`
 
 ## 模板
 

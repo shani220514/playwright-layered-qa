@@ -5,21 +5,23 @@ description: Converts a requirement Markdown report into YAML schema under asset
 
 # 用例结构化
 
-把 `examples/*/requirement.md` 转成程序可消费的 YAML。不直接生成 pytest 脚本。
+把 `examples/*/` 下的需求 Markdown 转成程序可消费的 YAML，包括 `requirement.md` 与 `requirement_<YYYYMMDD_HHMMSS>.md`。不直接生成 pytest 脚本。
 
 ## 输出
 
+同一次结构化共用同一个本地时间戳。同一目录、同一秒内重名时，在时间戳后追加 `_2`、`_3`。
+
 ```text
-assets/requirements/*.yaml
-assets/cases/*.yaml
-assets/questions/*.yaml   # 若有待确认问题
+assets/requirements/<module>_<YYYYMMDD_HHMMSS>.yaml
+assets/cases/<module>_<YYYYMMDD_HHMMSS>.yaml
+assets/questions/<module>_<YYYYMMDD_HHMMSS>.yaml   # 若有待确认问题
 ```
 
 ## 规则
 
 1. 保留 `source_ref` 追溯到 Markdown
 2. 不要编造 CSS selector 或 API path
-3. 待确认问题单独进 questions，status 为 open
+3. 待确认问题单独进 questions。Markdown 中该条为 closed 且人工结论非空时，status 为 closed，resolution 等于人工结论。其余为 open，resolution 为 `""`。没有「状态」「人工结论」列的旧文档，全部 open。不要把建议确认写进 resolution，除非人工结论原文就是采纳该建议
 4. 标签：`【维度：安全】` → `dimension:security`，`【方法：边界值】` → `method:boundary`
 
 ### requirements 必填
@@ -44,7 +46,7 @@ assets/questions/*.yaml   # 若有待确认问题
 
 ## 百度样例
 
-对照 `examples/baidu/requirement.md` → `assets/cases/baidu_home.yaml`。
+已提交样例不改名：`examples/baidu/requirement.md` → `assets/cases/baidu_home.yaml`。新生成的 YAML 仍按上面的时间戳文件名保存。
 
 校验：`python -m pytest tests/unit/test_yaml_schema.py tests/unit/test_baidu_case_asset.py`
 

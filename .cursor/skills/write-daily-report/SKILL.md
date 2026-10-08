@@ -7,6 +7,8 @@ description: Writes a concise test daily report from the day's work notes. Use w
 
 根据当日记录生成简短日报。不要编造未执行的数量。
 
+保存为 `reports/测试日报_<YYYYMMDD_HHMMSS>.md`。时间戳用本地时间，放在扩展名前。同一秒内重名时，在时间戳后追加 `_2`、`_3`。
+
 ```markdown
 # 测试日报 - YYYY-MM-DD
 

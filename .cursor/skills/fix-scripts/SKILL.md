@@ -17,7 +17,7 @@ description: Diagnoses and repairs failing pytest or Playwright scripts. Use whe
 1. 读完整 traceback 与失败截图（`test-results/`）
 2. 判断类型并给最小修复
 3. 只改失败用例相关代码
-4. 说明改点
+4. 说明改点。若把说明另存成文件，使用 `reports/脚本修复_<YYYYMMDD_HHMMSS>.md`（本地时间，扩展名前；同一秒重名追加 `_2`、`_3`）。不要给被修改的测试文件改名加时间戳
 
 ## 百度样例
 

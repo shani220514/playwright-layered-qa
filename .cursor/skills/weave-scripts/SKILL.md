@@ -15,9 +15,11 @@ description: Weaves YAML cases into pytest + Playwright script skeletons using B
 
 ## 输出
 
+文件名在扩展名前加本地时间戳 `YYYYMMDD_HHMMSS`。同一目录、同一秒内重名时，在时间戳后追加 `_2`、`_3`。import 与 `pytest_nodeid` 跟这次生成的文件名对齐。
+
 ```text
-src/pages/<page>.py
-tests/examples/test_<feature>.py
+src/pages/<page>_<YYYYMMDD_HHMMSS>.py
+tests/examples/test_<feature>_<YYYYMMDD_HHMMSS>.py
 ```
 
 ## 原则
@@ -30,7 +32,7 @@ tests/examples/test_<feature>.py
 
 ## 百度样例
 
-`TC-BAIDU-001` → `tests/examples/test_baidu_home.py`：
+已提交样例不改名。`TC-BAIDU-001` 对应 `tests/examples/test_baidu_home.py`：
 
 1. 启动拦截器
 2. `BaiduHomePage.open(config.base_url)`

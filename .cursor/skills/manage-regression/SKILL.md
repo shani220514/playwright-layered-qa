@@ -11,6 +11,7 @@ description: Builds a prioritized regression checklist and execution plan in Mar
 2. 按 P0/P1 列回归项
 3. 标明自动化还是手工
 4. 用任务列表跟踪
+5. 保存为 `reports/回归测试方案_<YYYYMMDD_HHMMSS>.md`。时间戳用本地时间，放在扩展名前。同一秒内重名时，在时间戳后追加 `_2`、`_3`
 
 ## 输出模板
 

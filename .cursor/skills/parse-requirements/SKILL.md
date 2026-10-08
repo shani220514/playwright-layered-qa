@@ -1,6 +1,6 @@
 ---
 name: parse-requirements
-description: Parses a product requirement into a human-reviewable Markdown report with test points, open questions, and functional cases. Use when the user says 需求解析, /需求, or asks to break down requirements for the Baidu sample site or any target URL.
+description: Parses a product requirement into a human-reviewable Markdown report with test points, open questions, and functional cases. Also writes human edits of those questions back into the same report, and regenerates affected functional cases after questions are closed. Use when the user says 需求解析, /需求, 确认待确认问题, 修改待确认问题, 重新生成功能用例, gives a conclusion for a Q- id, or asks whether to fill 人工结论 and whether 状态 must change.
 ---
 
 # 需求解析
@@ -13,16 +13,98 @@ description: Parses a product requirement into a human-reviewable Markdown repor
 
 1. 先让人看懂，再谈自动化
 2. 测试点按正向 / 逆向 / 边界
-3. 模糊点必须进「待确认问题」，不要写死
+3. 模糊点必须进「待确认问题」，不要写死。人给出结论之前，保持 open
 4. 功能用例只写业务步骤，不编造 selector 或接口路径
-5. 结束后提示使用「用例结构化」
+5. 结束后若仍有 open，先请人按编号给结论。说明结论写在当前这份报告的「人工结论」列，有结论的行要把「状态」改成 `closed`；人也可以在对话里给结论，由助手写回。人决定带着 open 继续时，再提示「用例结构化」
 
 ## 步骤
 
 1. 识别功能点（打开页面、搜索、结果、异常）
 2. 从功能 / UI / 兼容 / 性能补充测试关注点
 3. 在说明里可加【维度：…】【方法：等价类|边界值|场景法|错误推测】
-4. 导出到 `examples/<site>/requirement.md`
+4. 导出到 `examples/<site>/requirement_<YYYYMMDD_HHMMSS>.md`。时间戳用本地时间，放在扩展名前。同一目录、同一秒内重名时，在时间戳后追加 `_2`、`_3`
+5. 人要改待确认问题时，按下一节写回同一份报告，不另存新文件
+
+## 人工修改待确认问题
+
+人在对话里给结论，或直接改过报告后，把修改收进当前这份 Human Doc。不生成脚本，不编造人没说过的规则。
+
+触发：确认问题、修改待确认、关闭或重开某个 `Q-` 编号、按编号给出的结论，以及「重新生成功能用例」。
+
+### 问题表
+
+新报告，以及进入人工修改的报告，使用下面这五列：
+
+| ID | 问题 | 建议确认 | 状态 | 人工结论 |
+|----|------|----------|------|----------|
+| Q-LOGIN-001 | 弹窗从哪个入口打开 | 确认是首页「登录」还是别的入口 | open | |
+| Q-LOGIN-002 | 默认选中哪个页签 | 不要把其中一张截图写成唯一默认 | closed | 刚打开默认选中短信登录 |
+
+- `状态` 只写 `open` 或 `closed`
+- `建议确认` 保留当初的建议，不拿来覆盖
+- `人工结论` 只写人确定的那一句。`open` 时留空；`closed` 时必须非空
+- 已提交的 `examples/baidu/requirement.md` 不改。旧报告没有这两列时，先补上：已有行全部 `open`、结论留空，再套用本次修改
+
+### 人工结论和状态成对填写
+
+人问「要不要在当前文件的人工结论列补结论、状态列要不要改」时，按下面回答，并在人给出结论后写回同一份报告。
+
+结论写在当前这份报告的「人工结论」列，不另存新文件。「建议确认」不改。「状态」和「人工结论」一起改：
+
+- 已经定了：`状态` 写 `closed`，「人工结论」写确定的那一句，不能空着
+- 还没定：`状态` 保持 `open`，「人工结论」留空
+
+人可以自己改这个表，也可以在对话里按编号给结论（例如「Q-LOGIN-002：刚打开默认选中短信登录」），由助手写回同一份报告。同意某一行的建议时，人说「按建议确认」。
+
+两列不一致时，以「人工结论」有没有内容为准，并改状态使两列重新成对：
+
+- 只填了人工结论、状态仍是 `open`：视为已有结论，把该行状态改成 `closed`
+- 只把状态改成 `closed`、人工结论仍空：不能关闭，改回 `open`，并说明还缺结论那一句
+
+### 规则
+
+1. 只改人点名的编号。没提到的行保持原样
+2. 结论压缩成人的原意，可执行、可观察。不补人没说的提示文案、位数或跳转地址
+3. 人说「按建议确认」时，才把该行的建议确认抄进人工结论，并标 `closed`
+4. 只改问题描述或建议、还没给结论：改对应列，状态维持 `open`，人工结论留空
+5. 新增问题：沿用同一前缀，编号接在现有最大号之后，状态 `open`
+6. 删除问题：从清单移除，不回收编号。测试点或用例若写了「见该编号」，改成不再依赖它
+7. 关闭后，按下一节在同一份报告里重新生成受影响的测试点和功能用例。结论仍然含糊就保持 `open`，不重写，并说明还缺哪一句
+8. 人说「本轮不做 / 不验证」：标 `closed`，人工结论写这个范围。相关用例预期改成该范围，不写成已成功
+9. 人推翻已关闭结论：状态改回 `open`，清空人工结论；已按旧结论改过的用例，改回「见该编号」，或按人的新口径改写
+10. 可以只确认一部分。人若已在文件里改过，以文件为准，不要改回旧稿
+11. 这一步仍不写 selector、接口路径或 pytest
+
+### 关闭后重新生成功能用例
+
+待确认问题改为 `closed` 且人工结论非空后，在同一份报告里重写受影响的测试点和功能用例。不另存新文件，不生成脚本。
+
+人把状态改成 `closed`、在对话里关闭某个 `Q-`，或说「重新生成功能用例」时都要做。人已经改成 `closed`、但测试点或功能用例仍写着「见该编号」时，先重写再继续；不要带着过期的「见该编号」进入用例结构化。
+
+1. 先读当前报告。只采用状态为 `closed` 且人工结论非空的行。`open` 的行不写进预期
+2. 把测试点和功能用例里的「见该编号」换成该行人工结论中的可观察预期。保留用例编号、优先级，以及这次结论没有碰到的步骤
+3. 一条结论列了多种失败提示时，不要把整段提示绑到同一次操作上。提示原文留在人工结论；这次操作对得上的那一句才写入预期，对不上就保持「见该编号」，并说明对不上哪一句
+4. 不把建议确认抄进用例，除非人工结论就是采纳该建议
+5. 不编造结论里没有的文案、位数、倒计时、跳转地址、selector 或接口路径
+6. 没有引用这些已关闭编号的用例保持原样
+7. 重写后仍有 open 时，请人继续按编号给结论。人决定带着 open 继续时，再提示「用例结构化」。结构化读取的是重写后的同一份 Markdown
+
+### 交给用例结构化
+
+结构化读取同一份 Markdown，不要把已关闭的问题重新打开：
+
+| 报告列 | YAML |
+|--------|------|
+| 问题 | `description` |
+| 建议确认 | `suggested_confirmation` |
+| 状态 | `status` |
+| 人工结论 | `resolution` |
+
+`closed` 且人工结论非空 → `status: closed`，`resolution` 等于人工结论。其余 → `status: open`，`resolution` 为 `""`。没有这两列的旧文档，问题全部 `open`。
+
+### 改完后回复
+
+列出本次关闭的编号、仍为 open 的编号、以及按结论重写过的用例编号。仍有 open 时，请人继续按编号给结论；人决定带着 open 进入下一步时，再提示「用例结构化」。
 
 ## 百度样例范围
 
@@ -32,4 +114,4 @@ description: Parses a product requirement into a human-reviewable Markdown repor
 
 ## 输出模板
 
-见仓库 `examples/baidu/requirement.md`。写完后下一步：**用例结构化**。
+结构见仓库 `examples/baidu/requirement.md`（已提交样例，不改名）。新报告按上面的时间戳文件名保存，待确认问题用「状态」「人工结论」两列。仍有 open 时先请人确认，并说明：结论写在当前文件的「人工结论」列，有结论的行要把「状态」改成 `closed`，两列成对填写；也可以在对话里按编号给结论。问题改为 `closed` 后，先在同一份报告里重新生成受影响的功能用例，再进入 **用例结构化**。
