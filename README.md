@@ -3,6 +3,7 @@
 Pytest + Playwright 分层测试**框架**。默认 CI 只跑离线单测，不访问内网、不带业务系统。
 
 公开样例站点：[百度首页](https://www.baidu.com/)：打开页面、拦截 XHR/fetch，以及从首页进入[百度热搜榜](https://top.baidu.com/board?platform=pc&sa=pcindex_entry)。可选把拦截到的响应 JSON 与 MySQL 一行结果比对。业务 Page Object 请放你自己的项目里，不要往本仓拷贝内部系统。
+<img width="3072" height="1315" alt="image" src="https://github.com/user-attachments/assets/5bcd68f7-be05-4a15-be31-e0dffff7c4bd" />
 
 ## 能做什么
 
