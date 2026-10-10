@@ -37,6 +37,14 @@ python -m pytest tests/examples/test_baidu_hot_entry.py -m example --headed
 
 活站点失败时，截图和 trace 留在 `test-results/`。
 
+## 本机评审页
+
+```bash
+python -m src.web.server
+```
+
+浏览器打开 http://127.0.0.1:8765 。首页是 8 张能力卡片。「用例资产」读取 `assets/` 里的需求、用例和待确认问题。页面只监听本机，不改文件，不跑测试，不调用 Skill。
+
 ## 可选：拦截响应与 MySQL 比对
 
 不配 `DB_*` 时 `config.db` 为 `None`，现有用例不受影响。需要时在 `.env` 中取消注释并填写 `DB_HOST` / `DB_USER` / `DB_NAME` 等。
@@ -64,6 +72,8 @@ src/db/                只读 MySQLClient
 src/assertions/        响应 JSON 与库行比对
 src/yaml_runner/       YAML schema
 src/pages/             样例 POM（首页、热搜入口）
+src/web/               本机评审页服务
+web/                   评审页静态文件
 assets/                结构化用例（baidu_home、baidu_hot_entry）
 examples/baidu/        需求解析 Human Doc
 tests/unit/            离线单测（CI）
